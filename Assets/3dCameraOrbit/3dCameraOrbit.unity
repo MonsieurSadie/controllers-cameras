@@ -216,11 +216,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   accel: 10
   decel: 100
-  maxHorizontalSpeed: 10
+  maxHorizontalSpeed: 20
   maxVerticalSpeed: 10
   jumpForce: 20
   gravity: -30
   feetCollider: {fileID: 864194470}
+  inertiaFactor: 0.1
   enableUnityPhysicsExternalForces: 0
   isOnGround: 0
 --- !u!54 &88818932

@@ -75,9 +75,9 @@ public class Camera2D : MonoBehaviour
         
 
         // ### solution en lerp avec T fixé
-        // {
-        // transform.position = Vector3.Lerp(transform.position, camPos, 0.01f);
-        // }
+        {
+        transform.position = Vector3.Lerp(transform.position, camPos, 0.1f);
+        }
 
         // ### solution avec move towards (vitesse fixée)
         // {
