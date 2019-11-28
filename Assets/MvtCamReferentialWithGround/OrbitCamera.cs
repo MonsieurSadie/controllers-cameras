@@ -24,7 +24,7 @@ public class OrbitCamera : MonoBehaviour
     
   void Start()
   {
-    currentPitch = -Vector3.SignedAngle(transform.forward, Vector3.ProjectOnPlane(transform.forward, Vector3.up), transform.right);
+    currentPitch = GetPitch();
   }
 
   void Update()
@@ -50,9 +50,9 @@ public class OrbitCamera : MonoBehaviour
     // clamp pitch rotation
     // PB : on tourne autour de transform.right donc on ne peut pas utiliser directement eulerAngles qui sont la rotation autour des axes du monde (car transform.right est probablement une combinaison de X et Z)
     
-    RotatePitchSolution0(pitchInput);
+    //RotatePitchSolution0(pitchInput);
     
-    //RotatePitchSolution1(pitchInput);
+    RotatePitchSolution1(pitchInput);
 
     //RotatePitchSolution2(pitchInput);
   }
