@@ -10,6 +10,7 @@ public class Camera2D : MonoBehaviour
   {
     SPEED_UP_PULL_ZONE,
     SPEED_UP_PULL_ZONE_LERPED,
+    PLATFORM_SNAPPING,
   };
 
   public CameraBehaviour cameraType = CameraBehaviour.SPEED_UP_PULL_ZONE;
@@ -18,10 +19,19 @@ public class Camera2D : MonoBehaviour
 
   Vector3 velocity = Vector3.zero;
 
+  Vector3 currentTarget;
+
+
   void Update()
   {
     switch(cameraType)
     {
+      case CameraBehaviour.PLATFORM_SNAPPING:
+      {
+
+      }
+      break;
+
       case CameraBehaviour.SPEED_UP_PULL_ZONE :
       {
         Vector3 camPos      = transform.position;
@@ -91,6 +101,15 @@ public class Camera2D : MonoBehaviour
         // }
       }
       break;
+    }
+  }
+
+  // must be called by the avatar
+  public void OnAvatarTouchedGround(Vector3 groundHitPos)
+  {
+    if(cameraType == CameraBehaviour.PLATFORM_SNAPPING)
+    {
+      currentTarget.y = groundHitPos.y;
     }
   }
 
