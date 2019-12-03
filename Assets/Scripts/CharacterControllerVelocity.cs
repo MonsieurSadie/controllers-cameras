@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+// TODO : ajouter une courbe de sensibilité qui fasse que j'ai très peu de sensibilité quand je me déplace lentement et beaucoup quand je veux me déplacer vite
+
+// DEBUG : ground collision detection
+
 public class CharacterControllerVelocity : MonoBehaviour
 {
   public float accel = 10;
@@ -13,6 +18,7 @@ public class CharacterControllerVelocity : MonoBehaviour
   
   public SphereCollider feetCollider;
   Rigidbody rb;
+
   Vector3 velocity = Vector3.zero;
 
 
@@ -39,9 +45,9 @@ public class CharacterControllerVelocity : MonoBehaviour
 
     // on ground ?
     RaycastHit hit;
-    if(Physics.SphereCast(feetCollider.transform.position, feetCollider.radius, Vector3.down, out hit, feetCollider.radius, 1, QueryTriggerInteraction.Ignore))
+    if(Physics.SphereCast(feetCollider.transform.position, feetCollider.radius, Vector3.down, out hit, feetCollider.radius * 1.2f, 1, QueryTriggerInteraction.Ignore))
     {
-      if(hit.distance < 0.01f)
+      if(hit.distance < 0.1f)
       {
         isOnGround = true;
         // laisser la gravité lorsque l'on est au sol demande de mettre des forces de saut élevées
@@ -82,6 +88,30 @@ public class CharacterControllerVelocity : MonoBehaviour
     // clamp velocity. Beware, max speed can be different in horizontal and vertical directions
     velocity = GetClampedVelocity(velocity, maxHorizontalSpeed, maxVerticalSpeed);
 
+    // autre cas particulier : si le joueur avance contre une surface alors qu'il est en train de sauter.
+    // dans ce cas on ne devrait pas lui donner de vitesse horizontale (un peu comme quand on est au sol pour la vitesse verticale)
+    // on peut choisir de projeter le vecteur de déplacement horizontal sur ce mur si il y a collision
+    if(!isOnGround)
+    {
+      Vector3 hVelocity = new Vector3(velocity.x, 0, velocity.z);
+      if(Physics.Raycast(feetCollider.transform.position, hVelocity.normalized, out hit, feetCollider.radius))
+      {
+        if(hit.distance < 0.01f)
+        {
+          velocity.x = 0;
+          velocity.z = 0;
+          /*
+          // on projete le déplacement sur le mur
+          hVelocity = Vector3.ProjectOnPlane(hVelocity, hit.normal);
+          // on rapatrie ça dans la variable de vitesse
+          velocity.x = hVelocity.x;
+          velocity.y = hVelocity.y;
+          Debug.Break();
+          */
+        }
+      }
+    }
+
     rb.velocity = velocity;
 
     // align forward with wanted direction
@@ -109,5 +139,10 @@ public class CharacterControllerVelocity : MonoBehaviour
   void OnDrawGizmos()
   {
     Gizmos.DrawLine(transform.position, transform.position + velocity * 5);
+    // debgu separate horizontal and vertical velocities
+    Gizmos.color = Color.red;
+    Gizmos.DrawLine(transform.position, transform.position + new Vector3(velocity.x, 0, velocity.y));
+    Gizmos.color = Color.green;
+    Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, velocity.y, 0));
   }
 }
