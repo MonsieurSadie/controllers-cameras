@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
+// Petit break : caméra épaule !
+// Pour cela on a besoin d'un offset par rapport à la cible autour de laquelle on tourne
 public class OrbitCameraCollisionsStep4 : MonoBehaviour
 {
   public Transform target;
+  public Vector2 offset = Vector2.zero;
   public float distToTarget = 5f;
   public float yawSpeed = 90f;
   public float pitchSpeed = -90f; // invert by default
@@ -16,6 +18,7 @@ public class OrbitCameraCollisionsStep4 : MonoBehaviour
   public bool useDistanceCurve = true;
   public float distToTargetAtMinAngle = 4;
   public float distToTargetAtMaxAngle = 20;
+
 
   SphereCollider camCollider;
   OrbitCameraInput input;
@@ -43,6 +46,8 @@ public class OrbitCameraCollisionsStep4 : MonoBehaviour
     // la position de la caméra est toujours déterminée par celle de l'avatar
     // On part de la position de l'avatar puis on se déplace dans la direction actuelle de regard de la caméra (qui est auto-calculée par les rotate around) de la distance voulue
     Vector3 wantedPosition = target.position - transform.forward * currentDistanceToTarget;
+    wantedPosition += transform.right * offset.x;
+    wantedPosition += Vector3.up * offset.y;
     TryMovingCamera(wantedPosition);
     // Debug.LogFormat("Camera position after positioning: {0}", transform.position.ToString("F4"));
 
@@ -83,7 +88,7 @@ public class OrbitCameraCollisionsStep4 : MonoBehaviour
     // on commence par bouger la caméra (car on ne connait pas la position induite par la rotation que l'on veut faire)
     transform.RotateAround(rotationPivot, rotationAxis, rotationAmount);
     // on regarde ensuite s'il y a une collision (ne pas prendre la layer de la caméra, ce qui veut dire qu'elle ne doit pas être sur la layer default)
-    if(Physics.CheckSphere(transform.position, camCollider.radius, ~(1 << gameObject.layer)))
+    if(Physics.CheckSphere(transform.position, camCollider.radius, ~(1 << gameObject.layer | 1 << target.gameObject.layer)))
     {
       // collision, on annule la rotation qu'on vient de faire (ça ne pose pas de problème, pour rappel le résultat de nos calculs ne se verra qu'à la fin de la frame)
       transform.RotateAround(rotationPivot, rotationAxis, -rotationAmount);
@@ -94,7 +99,7 @@ public class OrbitCameraCollisionsStep4 : MonoBehaviour
   void TryMovingCamera(Vector3 newPosition)
   {
     // ici c'est plus simple, on connait la position cible
-    if(!Physics.CheckSphere(newPosition, camCollider.radius, ~(1 << gameObject.layer)))
+    if(!Physics.CheckSphere(newPosition, camCollider.radius, ~(1 << gameObject.layer | 1 << target.gameObject.layer)))
     {
       // pas de collision, on accepte le déplacement
       transform.position = newPosition;

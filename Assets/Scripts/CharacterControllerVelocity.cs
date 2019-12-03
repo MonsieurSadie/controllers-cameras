@@ -22,6 +22,15 @@ public class CharacterControllerVelocity : MonoBehaviour
   Vector3 velocity = Vector3.zero;
 
 
+  public enum ForwardAlignment
+  {
+    None,
+    Camera,
+    MovementDirection
+  };
+  public ForwardAlignment fwdAlignment = ForwardAlignment.Camera;
+
+
   // permet d'activer ou non les forces que unity voudrait appliquer à notre rigidbody
   // (forces dues au collisions principalement)
   public bool enableUnityPhysicsExternalForces = false;
@@ -68,8 +77,36 @@ public class CharacterControllerVelocity : MonoBehaviour
       velocity.y += gravity * Time.fixedDeltaTime;
     }
 
+
+    
+
     float hInput = Input.GetAxis("Horizontal");
     float vInput = Input.GetAxis("Vertical");
+    // les inputs sont interprétées dans le référentiel de la caméra
+    Vector3 camFwd    = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
+    Vector3 camRight  = Vector3.ProjectOnPlane(Camera.main.transform.right, Vector3.up);
+    Vector3 input     = camFwd.normalized * vInput + camRight.normalized * hInput;
+
+    // Orientation avatar
+    switch(fwdAlignment)
+    {
+      case ForwardAlignment.Camera :
+      {
+        // align forward with wanted direction
+        Vector3 fwd = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
+        transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
+      }
+      break;
+
+      case ForwardAlignment.MovementDirection :
+      {
+        // align forward with wanted direction
+        // should project on ground in case of non-flat floor
+        transform.rotation = Quaternion.LookRotation(input, Vector3.up);
+      }
+      break;
+    }
+
 
     // on teste si on a des inputs cette frame pour savoir si on doit décélérer
     if(Mathf.Abs(hInput + vInput) < 0.1f )
@@ -81,8 +118,7 @@ public class CharacterControllerVelocity : MonoBehaviour
       velocity.z = xzVelocity.z;
     }else
     {
-      velocity += vInput * transform.forward * accel;
-      velocity += hInput * transform.right * accel;
+      velocity += input.magnitude * transform.forward * accel;
     }
     
     // clamp velocity. Beware, max speed can be different in horizontal and vertical directions
@@ -113,10 +149,6 @@ public class CharacterControllerVelocity : MonoBehaviour
     }
 
     rb.velocity = velocity;
-
-    // align forward with wanted direction
-    Vector3 fwd = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
-    transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
   }
 
   Vector3 GetClampedVelocity(Vector3 currentVelocity, float maxHorizontalVelocity, float maxVerticalVelocity)
