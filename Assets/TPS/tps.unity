@@ -1556,7 +1556,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbc99bc8b6149854cab7f72bc3918456, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controlType: 0
+  controlType: 1
   yawInput: 0
   pitchInput: 0
   sensitivity: 1

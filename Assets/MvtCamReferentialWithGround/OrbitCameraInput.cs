@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using XInputDotNetPure;
 
 // TODO : ajouter XInput
 public class OrbitCameraInput : MonoBehaviour
@@ -44,6 +45,16 @@ public class OrbitCameraInput : MonoBehaviour
       case ControlType.Mouse:
         yawInput      = Input.GetAxis("Mouse X") * sensitivity; // Mouse X est la quantité de déplacement effectuée par la souris depuis la dernière frame
         pitchInput    = Input.GetAxis("Mouse Y") * sensitivity;
+      break;
+
+      case ControlType.GamepadXInput:
+        PlayerIndex playerIndex = (PlayerIndex)0;
+        GamePadState gamepadState = GamePad.GetState(playerIndex);
+        if (gamepadState.IsConnected)
+        {
+          yawInput    = gamepadState.ThumbSticks.Right.X * sensitivity;
+          pitchInput  = gamepadState.ThumbSticks.Right.Y * sensitivity;
+        }
       break;
     }    
   }
