@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// TODO :
-// + ajouter un "trigger" en hauteur pour éviter que la caméra fasse une translation prématurée lorsque l'on monte des colines, un escalier, etc (et surtout éviter un effet "bobbing")
-// + ajouter animationCurve pour lier la distance à l'avatar au pitch (plus près quand on regarde d'en dessous, plus loin d'au-dessus)
-// + ajouter une animationCurve pour que la vitesse de rotation de la cam ne soit pas linéaire par rapport aux inputs  du joueur (à vous de chercher une courbe intéressante)
-public class OrbitCamera : MonoBehaviour
+// Caméra orbit qui gère les collisions quand on tourne la caméra
+// pb: ne gère pas les déplacements de la caméra induits par les déplacements de l'avatar -> step2
+public class OrbitCameraCollisionsStep1 : MonoBehaviour
 {
   public Transform target;
   public float distToTarget = 5f;

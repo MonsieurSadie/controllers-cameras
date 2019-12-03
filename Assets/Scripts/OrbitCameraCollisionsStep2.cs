@@ -2,21 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// TODO :
-// + ajouter un "trigger" en hauteur pour éviter que la caméra fasse une translation prématurée lorsque l'on monte des colines, un escalier, etc (et surtout éviter un effet "bobbing")
-// + ajouter animationCurve pour lier la distance à l'avatar au pitch (plus près quand on regarde d'en dessous, plus loin d'au-dessus)
-// + ajouter une animationCurve pour que la vitesse de rotation de la cam ne soit pas linéaire par rapport aux inputs  du joueur (à vous de chercher une courbe intéressante)
-public class OrbitCamera : MonoBehaviour
+// Même caméra que précedemment mais maintenant on gère les collisions induites par les déplacements de l'avatar
+// PB : Si je me mets dans une position où la caméra est contre un mur et que je déplace le personnage, la caméra
+// va finir dans le mur et une fois dans le mur elle ne détecte plus les collisions.
+// Un indice, en augmentant le rayon du collider de la caméra, on peut s'apercevoir d'un autre problème
+public class OrbitCameraCollisionsStep2 : MonoBehaviour
 {
   public Transform target;
   public float distToTarget = 5f;
-  public float yawSpeed = 90f;
-  public float pitchSpeed = 90f;
+  public float yawSpeed = -90f; // invert by default
+  public float pitchSpeed = -90f; // invert by default
   public float pitchUpwardLimitAngle = 70f;
   public float pitchDownwardLimitAngle = -45f;
 
   // Courbe qui permet d'ajuster la distance en fonction de l'angle que l'on a à l'avatar
-  public bool useDistanceCurve = false;
+  public bool useDistanceCurve = true;
   public float distToTargetAtMinAngle = 4;
   public float distToTargetAtMaxAngle = 20;
 
@@ -42,14 +42,21 @@ public class OrbitCamera : MonoBehaviour
       float pitchPercentage   = Mathf.InverseLerp(pitchDownwardLimitAngle, pitchUpwardLimitAngle, GetPitch());
       currentDistanceToTarget = Mathf.Lerp(distToTargetAtMinAngle, distToTargetAtMaxAngle, pitchPercentage);
     }
-    transform.position = target.position - transform.forward * currentDistanceToTarget;
 
-    float rotationAmount = yawSpeed * input.yawInput * Time.deltaTime;
-    TryRotatingCameraAround(target.position, Vector3.up, rotationAmount);
+    // la position de la caméra est toujours déterminée par celle de l'avatar
+    // On part de la position de l'avatar puis on se déplace dans la direction actuelle de regard de la caméra (qui est auto-calculée par les rotate around) de la distance voulue
+    Vector3 wantedPosition = target.position - transform.forward * currentDistanceToTarget;
+    TryMovingCamera(wantedPosition);
+    Debug.LogFormat("Camera position after positioning: {0}", transform.position.ToString("F4"));
+
+    float yawRotationAmount = yawSpeed * input.yawInput * Time.deltaTime;
+    TryRotatingCameraAround(target.position, Vector3.up, yawRotationAmount);
+    Debug.LogFormat("Camera position after yaw rotation: {0}", transform.position.ToString("F4"));
 
     // clamp pitch rotation
     // PB : on tourne autour de transform.right donc on ne peut pas utiliser directement eulerAngles qui sont la rotation autour des axes du monde (car transform.right est probablement une combinaison de X et Z)
     RotatePitch(input.pitchInput);
+    Debug.LogFormat("Camera position after pitch rotation: {0}", transform.position.ToString("F4"));
   }
 
   // Solution 2: pour avoir le pitch actuel de la caméra, on peut regarder l'angle entre le forward actuel et le forward projeté sur la plane X-Z (voir fonction GetPitch())
@@ -76,13 +83,26 @@ public class OrbitCamera : MonoBehaviour
     // 2) Une autre option est de quand même prendre en compte la demande du joueur et
     // par exemple de rapprocher la caméra de l'avatar pour permettre de tourner sans rentrer dans le mur
 
-    // on commence par bouger la caméra
+    // on commence par bouger la caméra (car on ne connait pas la position induite par la rotation que l'on veut faire)
     transform.RotateAround(rotationPivot, rotationAxis, rotationAmount);
     // on regarde ensuite s'il y a une collision (ne pas prendre la layer de la caméra, ce qui veut dire qu'elle ne doit pas être sur la layer default)
     if(Physics.CheckSphere(transform.position, camCollider.radius, ~(1 << gameObject.layer)))
     {
-      // collision, on annule la rotation qu'on vient de faire
+      // collision, on annule la rotation qu'on vient de faire (ça ne pose pas de problème, pour rappel le résultat de nos calculs ne se verra qu'à la fin de la frame)
       transform.RotateAround(rotationPivot, rotationAxis, -rotationAmount);
+    }
+  }
+
+  // même idée que pour try rotate, on valide on pas la demande de nouvelle position
+  void TryMovingCamera(Vector3 newPosition)
+  {
+    // ici c'est plus simple, on connait la position cible
+    if(!Physics.CheckSphere(newPosition, camCollider.radius, ~(1 << gameObject.layer)))
+    {
+      // pas de collision, on accepte le déplacement
+      transform.position = newPosition;
+    }else{
+      Debug.LogFormat("collision while trying moving camera from position {0} to position {1}", transform.position.ToString("F4"), newPosition.ToString("F4"));
     }
   }
 
