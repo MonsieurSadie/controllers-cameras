@@ -43,6 +43,9 @@ public class CharacterControllerVelocity : MonoBehaviour
 
   public float deadzone = 0.1F;
 
+
+  public bool isSliding = false;
+
   public enum JumpState
   {
     None,
@@ -50,6 +53,8 @@ public class CharacterControllerVelocity : MonoBehaviour
     InAir
   };
   JumpState jumpState = JumpState.None;
+
+  public Vector3 input = Vector3.zero;
 
   void Awake()
   {
@@ -99,13 +104,14 @@ public class CharacterControllerVelocity : MonoBehaviour
     // les inputs sont interprétées dans le référentiel de la caméra
     Vector3 camFwd    = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
     Vector3 camRight  = Vector3.ProjectOnPlane(Camera.main.transform.right, Vector3.up);
-    Vector3 input     = camFwd.normalized * vInput + camRight.normalized * hInput;
+    input             = camFwd.normalized * vInput + camRight.normalized * hInput;
 
 
 
     // cancel moves when jump is starting
     if(jumpState == JumpState.Start) return;
 
+    if(isSliding) return;
 
 
     //// Orientation avatar
@@ -194,27 +200,12 @@ public class CharacterControllerVelocity : MonoBehaviour
       velocity += Vector3.up * jumpForce;
       // InitiateJump();
     }
-  }
 
-/*
-  Si on veut une animation où le personnage prend appui avant de sauter, il faut déclencher le mouvement de saut seulement plus tard
-
-  // this function is to synchronize with animation. We have to start by a jump-up anim which will be in-place
-  // and only then actually move the avatar around
-  void InitiateJump()
-  {
-    jumpState = JumpState.Start;
-    BroadcastMessage("InitiateJump", SendMessageOptions.DontRequireReceiver);
-    rb.isKinematic = true;
+    if(Input.GetButtonDown("Slide") && isOnGround)
+    {
+      isSliding = true;
+    }
   }
-
-  void OnJumpInAir()
-  {
-    jumpState = JumpState.InAir;
-    rb.isKinematic = false;
-    velocity += Vector3.up * jumpForce;
-  }
-*/
 
   void OnDrawGizmos()
   {
