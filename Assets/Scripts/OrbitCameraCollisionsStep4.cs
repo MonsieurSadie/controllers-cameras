@@ -4,6 +4,7 @@ using UnityEngine;
 
 // Petit break : caméra épaule !
 // Pour cela on a besoin d'un offset par rapport à la cible autour de laquelle on tourne
+// (lignes 49 & 50)
 public class OrbitCameraCollisionsStep4 : MonoBehaviour
 {
   public Transform target;

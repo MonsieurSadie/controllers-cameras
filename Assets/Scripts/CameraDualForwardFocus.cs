@@ -6,6 +6,9 @@ public class CameraDualForwardFocus : MonoBehaviour
 {
   public Transform followee;
 
+
+  // Anchor définit la zone de la caméra (donc de l'écran) où doti se trouver l'avatar
+  // Trigger défini la zone de la caméra qui déclenche le changement d'ancre
   public float leftAnchor    = -1;
   public float rightAnchor   = 1;
   public float leftTrigger   = -2;
@@ -15,6 +18,7 @@ public class CameraDualForwardFocus : MonoBehaviour
 
   Vector3 target;
 
+  //
   Transform targetAnchorTr;
   Transform leftAnchorTr;
   Transform rightAnchorTr;
@@ -40,7 +44,6 @@ public class CameraDualForwardFocus : MonoBehaviour
     {
       // target right anchor
       targetAnchorTr = rightAnchorTr;
-      // target.x = transform.position.x + rightAnchor;
     }
 
     // if we hit right trigger
@@ -50,7 +53,6 @@ public class CameraDualForwardFocus : MonoBehaviour
     {
       // target left anchor
       targetAnchorTr = leftAnchorTr;
-      // target.x = transform.position.x + leftAnchor;
     }
 
     // only follow player if going in opposite direction of current anchor
@@ -58,7 +60,9 @@ public class CameraDualForwardFocus : MonoBehaviour
         (targetAnchorTr == rightAnchorTr && followee.position.x < targetAnchorTr.position.x)
     )
     {
+      // Pour la destination, on ne touche pas au Y et au Z de la caméra
       Vector3 currentTarget = transform.position;
+      // Le centre de la caméra doit se trouver à la position de l'avatar - la position locale de l'ancre sélectionnée (si on n'utilise pas la position locale, il faut simplement soustraire position de l'ancre et position de la caméra)
       currentTarget.x = followee.position.x - targetAnchorTr.localPosition.x;
       transform.position = Vector3.Lerp(transform.position, currentTarget, 0.2f);
     }

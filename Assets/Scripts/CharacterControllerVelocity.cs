@@ -9,7 +9,9 @@ using UnityEngine;
 
 public class CharacterControllerVelocity : MonoBehaviour
 {
+  public bool useAcceleration = false;
   public float accel = 10;
+
   public float decel = 100;
   public float maxHorizontalSpeed = 10;
   public float maxVerticalSpeed   = 10;
@@ -36,6 +38,18 @@ public class CharacterControllerVelocity : MonoBehaviour
   public bool enableUnityPhysicsExternalForces = false;
 
   public bool isOnGround = false;
+
+  public AnimationCurve axisSensitivity = AnimationCurve.Constant(-1, 1, 1);
+
+  public float deadzone = 0.1F;
+
+  public enum JumpState
+  {
+    None,
+    Start,
+    InAir
+  };
+  JumpState jumpState = JumpState.None;
 
   void Awake()
   {
@@ -80,36 +94,48 @@ public class CharacterControllerVelocity : MonoBehaviour
 
     
 
-    float hInput = Input.GetAxis("Horizontal");
-    float vInput = Input.GetAxis("Vertical");
+    float hInput = axisSensitivity.Evaluate( Input.GetAxis("Horizontal") );
+    float vInput = axisSensitivity.Evaluate( Input.GetAxis("Vertical") );
     // les inputs sont interprétées dans le référentiel de la caméra
     Vector3 camFwd    = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
     Vector3 camRight  = Vector3.ProjectOnPlane(Camera.main.transform.right, Vector3.up);
     Vector3 input     = camFwd.normalized * vInput + camRight.normalized * hInput;
 
-    // Orientation avatar
-    switch(fwdAlignment)
-    {
-      case ForwardAlignment.Camera :
-      {
-        // align forward with wanted direction
-        Vector3 fwd = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
-        transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
-      }
-      break;
 
-      case ForwardAlignment.MovementDirection :
+
+    // cancel moves when jump is starting
+    if(jumpState == JumpState.Start) return;
+
+
+
+    //// Orientation avatar
+
+    // don't change orientation if no input
+    if(input.magnitude > deadzone)
+    {
+      switch(fwdAlignment)
       {
-        // align forward with wanted direction
-        // should project on ground in case of non-flat floor
-        transform.rotation = Quaternion.LookRotation(input, Vector3.up);
+        case ForwardAlignment.Camera :
+        {
+          // align forward with wanted direction
+          Vector3 fwd = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up);
+          transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
+        }
+        break;
+
+        case ForwardAlignment.MovementDirection :
+        {
+          // align forward with wanted direction
+          // should project on ground in case of non-flat floor
+          transform.rotation = Quaternion.LookRotation(input, Vector3.up);
+        }
+        break;
       }
-      break;
     }
 
 
     // on teste si on a des inputs cette frame pour savoir si on doit décélérer
-    if(Mathf.Abs(hInput + vInput) < 0.1f )
+    if(input.magnitude < deadzone )
     {
       // la décélération ne s'applique pas à la vitesse verticale, décomposons la vitesse
       Vector3 xzVelocity = new Vector3(velocity.x, 0, velocity.z);
@@ -118,7 +144,15 @@ public class CharacterControllerVelocity : MonoBehaviour
       velocity.z = xzVelocity.z;
     }else
     {
-      velocity += input.magnitude * transform.forward * accel;
+      if(useAcceleration)
+      {
+        velocity += input.magnitude * transform.forward * accel * Time.fixedDeltaTime;
+      }else
+      {
+        Vector3 xzVelocity = input.magnitude * transform.forward * maxHorizontalSpeed;
+        xzVelocity.y = velocity.y;
+        velocity = xzVelocity;
+      }
     }
     
     // clamp velocity. Beware, max speed can be different in horizontal and vertical directions
@@ -136,14 +170,6 @@ public class CharacterControllerVelocity : MonoBehaviour
         {
           velocity.x = 0;
           velocity.z = 0;
-          /*
-          // on projete le déplacement sur le mur
-          hVelocity = Vector3.ProjectOnPlane(hVelocity, hit.normal);
-          // on rapatrie ça dans la variable de vitesse
-          velocity.x = hVelocity.x;
-          velocity.y = hVelocity.y;
-          Debug.Break();
-          */
         }
       }
     }
@@ -162,11 +188,33 @@ public class CharacterControllerVelocity : MonoBehaviour
   void Update()
   {
     // le saut est un "KeyDown", il doit donc être testé dans l'update
-    if(Input.GetButtonDown("Jump"))
+    if(Input.GetButtonDown("Jump") && isOnGround)
     {
+      BroadcastMessage("InitiateJump", SendMessageOptions.DontRequireReceiver);
       velocity += Vector3.up * jumpForce;
+      // InitiateJump();
     }
   }
+
+/*
+  Si on veut une animation où le personnage prend appui avant de sauter, il faut déclencher le mouvement de saut seulement plus tard
+
+  // this function is to synchronize with animation. We have to start by a jump-up anim which will be in-place
+  // and only then actually move the avatar around
+  void InitiateJump()
+  {
+    jumpState = JumpState.Start;
+    BroadcastMessage("InitiateJump", SendMessageOptions.DontRequireReceiver);
+    rb.isKinematic = true;
+  }
+
+  void OnJumpInAir()
+  {
+    jumpState = JumpState.InAir;
+    rb.isKinematic = false;
+    velocity += Vector3.up * jumpForce;
+  }
+*/
 
   void OnDrawGizmos()
   {
