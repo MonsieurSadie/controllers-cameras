@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using XInputDotNetPure;
 
-// TODO : ajouter XInput
 public class OrbitCameraInput : MonoBehaviour
 {
   public enum ControlType

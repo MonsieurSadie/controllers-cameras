@@ -53,7 +53,6 @@ public class AvatarAnimationManager : MonoBehaviour
 
   IEnumerator IdleSelector()
   {
-    Debug.LogFormat("Starting idle selector coroutine");
     animator.SetFloat("IdleIndex", 0);
 
     float idleTime = 0;

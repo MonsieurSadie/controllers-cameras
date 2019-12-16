@@ -178,20 +178,15 @@ public class CharacterControllerVelocity : MonoBehaviour
     // clamp velocity. Beware, max speed can be different in horizontal and vertical directions
     velocity = GetClampedVelocity(velocity, maxHorizontalSpeed, maxVerticalSpeed);
 
-    // autre cas particulier : si le joueur avance contre une surface alors qu'il est en train de sauter.
+    // autre cas particulier : si le joueur avance contre une surface alors qu'il est déjà en collision avec celle-ci.
     // dans ce cas on ne devrait pas lui donner de vitesse horizontale (un peu comme quand on est au sol pour la vitesse verticale)
     // on peut choisir de projeter le vecteur de déplacement horizontal sur ce mur si il y a collision
-    if(!isOnGround)
+    Vector3 hVelocity = new Vector3(velocity.x, 0, velocity.z);
+    if(Physics.Raycast(feetCollider.transform.position, hVelocity.normalized, out hit, feetCollider.radius))
     {
-      Vector3 hVelocity = new Vector3(velocity.x, 0, velocity.z);
-      if(Physics.Raycast(feetCollider.transform.position, hVelocity.normalized, out hit, feetCollider.radius))
-      {
-        if(hit.distance < 0.01f)
-        {
-          velocity.x = 0;
-          velocity.z = 0;
-        }
-      }
+      Debug.LogFormat("cancel h movement due to wall collision");
+      velocity.x = 0;
+      velocity.z = 0;
     }
 
     // apply back to rigidbody
@@ -221,12 +216,26 @@ public class CharacterControllerVelocity : MonoBehaviour
     }
   }
 
+
+
+  void OnCollisionEnter(Collision info)
+  {
+    if(isJumping)
+    {
+      Debug.LogFormat("collision with something while jumping, cancelling jump");
+      isJumping = false;
+      velocity.y = 0;
+    }
+  }
+
+
+
   void OnDrawGizmos()
   {
     Gizmos.DrawLine(transform.position, transform.position + velocity * 5);
     // debgu separate horizontal and vertical velocities
     Gizmos.color = Color.red;
-    Gizmos.DrawLine(transform.position, transform.position + new Vector3(velocity.x, 0, velocity.y));
+    Gizmos.DrawLine(transform.position, transform.position + new Vector3(velocity.x, 0, velocity.z));
     Gizmos.color = Color.green;
     Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, velocity.y, 0));
   }
