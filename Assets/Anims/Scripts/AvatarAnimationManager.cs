@@ -14,7 +14,7 @@ public class AvatarAnimationManager : MonoBehaviour
   void Start()
   {
     prevVelocity = rb.velocity;
-    prevPlayerInputAxis = characterController.input;
+    prevPlayerInputAxis = characterController.inputAxis;
     StartCoroutine(IdleSelector());
   }
 
@@ -32,6 +32,8 @@ public class AvatarAnimationManager : MonoBehaviour
 
     animator.SetBool("IsSliding", characterController.isSliding);
 
+    animator.SetBool("Jump", characterController.isJumping);
+
     // détecter les moments où on commence à tomber
     if(prevVelocity.y >= 0 && currentVelocity.y < 0)
     {
@@ -39,13 +41,13 @@ public class AvatarAnimationManager : MonoBehaviour
     }
 
     // gestion des idle, on lance une coroutine quand le joueur s'arrête
-    if(prevPlayerInputAxis.magnitude > 0 && characterController.input.magnitude == 0)
+    if(prevPlayerInputAxis.magnitude > 0 && characterController.inputAxis.magnitude == 0)
     {
       StartCoroutine(IdleSelector());
     }
 
     prevVelocity = currentVelocity;
-    prevPlayerInputAxis = characterController.input;
+    prevPlayerInputAxis = characterController.inputAxis;
   }
 
 
@@ -83,6 +85,6 @@ public class AvatarAnimationManager : MonoBehaviour
 
   void InitiateJump()
   {
-    animator.SetTrigger("Jump");
+    
   }
 }
