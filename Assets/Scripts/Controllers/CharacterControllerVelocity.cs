@@ -106,7 +106,7 @@ public class CharacterControllerVelocity : MonoBehaviour
 
     
     /////////////////////////////////////////////////////////////
-    //// DIRECTION INPUT (OTHER INPUTS IN UPDATE)
+    //// DIRECTION INPUT (KEYDOWN INPUTS IN UPDATE)
     /////////////////////////////////////////////////////////////
 
     float hInput = axisSensitivity.Evaluate( Input.GetAxis("Horizontal") );
@@ -182,16 +182,20 @@ public class CharacterControllerVelocity : MonoBehaviour
     // dans ce cas on ne devrait pas lui donner de vitesse horizontale (un peu comme quand on est au sol pour la vitesse verticale)
     // on peut choisir de projeter le vecteur de déplacement horizontal sur ce mur si il y a collision
     Vector3 hVelocity = new Vector3(velocity.x, 0, velocity.z);
-    if(Physics.Raycast(feetCollider.transform.position, hVelocity.normalized, out hit, feetCollider.radius))
+    if(Physics.Raycast(feetCollider.transform.position, hVelocity.normalized, out hit, Mathf.Infinity))
     {
-      Debug.LogFormat("cancel h movement due to wall collision");
-      velocity.x = 0;
-      velocity.z = 0;
+      if(hit.distance < feetCollider.radius*1.1f)
+      {
+        velocity.x = 0;
+        velocity.z = 0;
+      }
     }
 
     // apply back to rigidbody
     rb.velocity = velocity;
   }
+
+
 
   Vector3 GetClampedVelocity(Vector3 currentVelocity, float maxHorizontalVelocity, float maxVerticalVelocity)
   {
@@ -200,6 +204,8 @@ public class CharacterControllerVelocity : MonoBehaviour
     clampedVelocity.y       = Mathf.Sign(currentVelocity.y) * Mathf.Min( Mathf.Abs(currentVelocity.y), maxVerticalVelocity);
     return clampedVelocity;
   }
+
+
 
   void Update()
   {
@@ -215,19 +221,6 @@ public class CharacterControllerVelocity : MonoBehaviour
       isSliding = true;
     }
   }
-
-
-
-  void OnCollisionEnter(Collision info)
-  {
-    if(isJumping)
-    {
-      Debug.LogFormat("collision with something while jumping, cancelling jump");
-      isJumping = false;
-      velocity.y = 0;
-    }
-  }
-
 
 
   void OnDrawGizmos()
